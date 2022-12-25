@@ -1,0 +1,90 @@
+import tensorflow as tf
+import cv2
+print(tf)
+print(cv2)
+
+import tensorflow as tf
+import cv2
+import numpy as np
+
+model = tf.keras.models.load_model('keras_model.h5', compile=False)  # 載入模型
+data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)          # 設定資料陣列
+
+def text1(text):      # 建立顯示文字的函式
+    global img       # 設定 img 為全域變數
+    org = (0,30)     # 文字位置
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX  # 文字字型
+    fontScale = 0.6                        # 文字尺寸
+    color = (0,255,0)                # 顏色
+    thickness = 2                        # 文字外框線條粗細
+    lineType = cv2.LINE_AA               # 外框線條樣式
+    cv2.putText(img, text, org, fontFace, fontScale, color, thickness, lineType) # 放入文字
+def text2(text):      # 建立顯示文字的函式
+    org = (0,30)     # 文字位置
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX  # 文字字型
+    fontScale = 0.6                       # 文字尺寸
+    color = (0,0,255)                # 顏色
+    thickness = 2                        # 文字外框線條粗細
+    lineType = cv2.LINE_AA               # 外框線條樣式
+    cv2.putText(img, text, org, fontFace, fontScale, color, thickness, lineType) # 放入文字
+
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("Cannot open camera")
+    exit()
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("Cannot receive frame")
+        break
+    img = cv2.resize(frame , (400, 300))
+    img = img[0:224,80:304]
+    image_array = np.asarray(img)
+    normalized_image_array = (image_array.astype(np.float32) / 127.0) - 1
+    data[0] = normalized_image_array
+    prediction = model.predict(data)
+    a,b,bg= prediction[0]    # 印出每個項目的數值資訊
+    print(a,b,bg)
+    if a>0.9999:              # 判斷有戴口罩
+        text1('Already wear a mask')
+    if b>0.0001:              # 判斷沒戴口罩
+        text2('Please wear a mask')
+    cv2.imshow('FaceMaskDetection', img)
+    if cv2.waitKey(1)& 0xFF == ord('q'):
+        break  # 按下 q 鍵停止
+cap.release()
+cv2.destroyAllWindows()
+
+import cv2
+# 選擇第二隻攝影機（0 代表第一隻、1 代表第二隻）。
+cap = cv2.VideoCapture(0)
+# 解析 Fourcc 格式資料的函數
+def decode_fourcc(v):
+  v = int(v)
+  return "".join([chr((v >> 8 * i) & 0xFF) for i in range(4)])
+# 取得影像的尺寸大小
+width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+print("Image Size: %d x %d" % (width, height))
+# 取得 Codec 名稱
+fourcc = cap.get(cv2.CAP_PROP_FOURCC)
+codec = decode_fourcc(fourcc)
+print("Codec: " + codec)
+# 設定影像的尺寸大小
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1920)
+print("Image Size: %d x %d" % (width, height))
+while(True):
+  # 從攝影機擷取一張影像
+  ret, frame = cap.read()
+  # 顯示圖片
+  cv2.imshow('frame', frame)
+  # 若按下 q 鍵則離開迴圈
+  if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
+# 釋放攝影機
+cap.release()
+# 關閉所有 OpenCV 視窗
+cv2.destroyAllWindows()
+#用cap.isOpened() 檢查攝影機是否有啟動
+#用cap.open() 啟動它。
